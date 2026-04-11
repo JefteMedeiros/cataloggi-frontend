@@ -26,7 +26,7 @@ export default function Home() {
             Cataloggi
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Navegue e pesquise seu catálogo
+            Catálogo de materiais para projetos de iluminação pública
           </p>
         </header>
 

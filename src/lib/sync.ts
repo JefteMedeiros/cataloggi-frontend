@@ -2,6 +2,11 @@ import { db } from '@/lib/db';
 import type { Category, Item } from '@/lib/db';
 
 const LAST_SYNCED_KEY = 'cataloggi_lastSyncedAt';
+const MOCK_VERSION_KEY = 'cataloggi_mockVersion';
+
+// Bump this string whenever the mock data in src/mocks/api.ts changes.
+// On the next page load the local DB will be cleared and fully re-synced.
+const DEV_MOCK_VERSION = '2';
 
 interface ItemsPage {
   items: Item[];
@@ -45,7 +50,23 @@ async function syncData(): Promise<void> {
   }
 }
 
+async function clearAndSync(): Promise<void> {
+  localStorage.removeItem(LAST_SYNCED_KEY);
+  await db.categories.clear();
+  await db.items.clear();
+  await syncData();
+}
+
 export function initSync(): void {
+  if (import.meta.env.DEV) {
+    const storedVersion = localStorage.getItem(MOCK_VERSION_KEY);
+    if (storedVersion !== DEV_MOCK_VERSION) {
+      localStorage.setItem(MOCK_VERSION_KEY, DEV_MOCK_VERSION);
+      void clearAndSync();
+      return;
+    }
+  }
+
   void syncData();
   window.addEventListener('online', () => void syncData());
 }

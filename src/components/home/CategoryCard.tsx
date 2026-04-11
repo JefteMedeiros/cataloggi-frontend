@@ -1,15 +1,15 @@
 import { Link } from 'react-router-dom';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { CodeIcon, Database01Icon, ColorsIcon } from '@hugeicons/core-free-icons';
+import { ConstructionIcon, BulbIcon, CircuitBoardIcon } from '@hugeicons/core-free-icons';
 import type { IconSvgElement } from '@hugeicons/react';
 import { cva } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 import type { Category } from '@/lib/db';
 
 const ICON_MAP: Record<string, IconSvgElement> = {
-  CodeIcon,
-  Database01Icon,
-  ColorsIcon,
+  ConstructionIcon,
+  BulbIcon,
+  CircuitBoardIcon,
 };
 
 const cardVariants = cva(
@@ -28,7 +28,7 @@ interface CategoryCardProps {
 }
 
 export function CategoryCard({ category, className }: CategoryCardProps) {
-  const icon = ICON_MAP[category.icon] ?? CodeIcon;
+  const icon = ICON_MAP[category.icon] ?? ConstructionIcon;
 
   return (
     <Link
