@@ -1,13 +1,13 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Sun01Icon, Moon01Icon } from "@hugeicons/core-free-icons";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@workspace/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@workspace/ui/components/dropdown-menu";
 import { useTheme } from "@/hooks/use-theme";
 
 export function ModeToggle() {
