@@ -38,7 +38,8 @@ There is currently no dedicated automated test suite configured in this monorepo
 - If adding tests, prefer colocated `*.test.ts(x)` near source or under `src/__tests__/`.
 
 ## Commit & Pull Request Guidelines
-- Prefer Conventional Commit prefixes: `feat:`, `fix:`, `chore:`, `refactor:`.
+- Follow Conventional Commits: `feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `style:`, `test:`, `ci:`, `perf:`, `build:`.
+- Never add `Co-Authored-By` trailers or any other AI attribution to commits.
 - Keep commits focused by workspace (`apps/app`, `apps/dashboard`, `packages/ui`).
 - PRs should include a short summary of what changed and why.
 - PRs should include the affected workspaces.
