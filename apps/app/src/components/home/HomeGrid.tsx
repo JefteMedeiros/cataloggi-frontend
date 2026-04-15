@@ -1,8 +1,8 @@
-import { useState, useMemo } from "react";
-import { SearchBar } from "@/components/home/SearchBar";
+import { Input } from "@workspace/ui/components/input";
+import { useMemo, useState } from "react";
 import { CategoryCard } from "@/components/home/CategoryCard";
-import { cn } from "@/lib/utils";
 import type { Category } from "@/lib/db";
+import { cn } from "@/lib/utils";
 
 interface HomeGridProps {
   categories: Category[];
@@ -16,19 +16,18 @@ export function HomeGrid({ categories, className }: HomeGridProps) {
     () =>
       search.trim() === ""
         ? categories
-        : categories.filter((c) =>
-            c.name.toLowerCase().includes(search.toLowerCase()),
+        : categories.filter((category) =>
+            category.name.toLowerCase().includes(search.toLowerCase()),
           ),
     [categories, search],
   );
 
   return (
     <div className={cn("flex flex-col gap-6", className)}>
-      <SearchBar
+      <Input
         value={search}
-        onChange={setSearch}
-        placeholder="Buscar categorias…"
-        size="lg"
+        onChange={(event) => setSearch(event.target.value)}
+        placeholder="Buscar categorias..."
       />
 
       {filtered.length === 0 ? (

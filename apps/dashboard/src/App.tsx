@@ -1,11 +1,12 @@
-import { Button } from "@workspace/ui/components/button";
+import { AppRouter } from "./router";
+import { ModeToggle } from "./components/mode-toggle";
+import { ThemeProvider } from "./components/theme-provider";
 
-function App() {
+export default function App() {
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <Button>Dashboard</Button>
-    </main>
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme-dashboard">
+      <AppRouter />
+      <ModeToggle />
+    </ThemeProvider>
   );
 }
-
-export default App;

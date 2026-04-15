@@ -1,0 +1,245 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@workspace/ui/components/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@workspace/ui/components/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@workspace/ui/components/form";
+import { Input } from "@workspace/ui/components/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@workspace/ui/components/select";
+import { useEffect, useState, type ChangeEvent } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
+import { apiFetch } from "../../lib/api";
+import { cn } from "@workspace/ui/lib/utils";
+import type {
+  CategoryDto,
+  CreateItemDto,
+  ItemDetail,
+  ItemSummary,
+  UpdateItemDto,
+} from "../../lib/types";
+
+const itemSchema = z.object({
+  name: z.string().trim().min(1, "O nome é obrigatório"),
+  categoryId: z.coerce.number().min(1, "A categoria é obrigatória"),
+  content: z.string().min(1, "O conteúdo é obrigatório"),
+});
+
+type ItemValues = z.infer<typeof itemSchema>;
+
+interface Props {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  item?: ItemSummary | null;
+  categories: CategoryDto[];
+}
+
+export default function ItemFormModal({
+  open,
+  onOpenChange,
+  item,
+  categories,
+}: Props) {
+  const queryClient = useQueryClient();
+  const [selectedFileName, setSelectedFileName] = useState<string>("");
+
+  const form = useForm<ItemValues>({
+    resolver: zodResolver(itemSchema),
+    defaultValues: { name: "", categoryId: 0, content: "" },
+  });
+
+  const { data: itemDetail } = useQuery({
+    queryKey: ["item", item?.id],
+    queryFn: () => apiFetch<ItemDetail>(`/api/admin/items/${item!.id}`),
+    enabled: open && Boolean(item),
+  });
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    if (item && itemDetail) {
+      form.reset({
+        name: itemDetail.name,
+        categoryId: itemDetail.categoryId,
+        content: itemDetail.content,
+      });
+      setSelectedFileName("");
+      return;
+    }
+
+    if (!item) {
+      form.reset({ name: "", categoryId: 0, content: "" });
+      setSelectedFileName("");
+    }
+  }, [form, item, itemDetail, open]);
+
+  function handleFileUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = (loadEvent) => {
+      form.setValue("content", (loadEvent.target?.result as string) ?? "", {
+        shouldValidate: true,
+      });
+      setSelectedFileName(file.name);
+    };
+
+    reader.readAsText(file);
+  }
+
+  async function onSubmit(values: ItemValues) {
+    try {
+      if (item) {
+        const body: UpdateItemDto = {
+          name: values.name.trim(),
+          categoryId: values.categoryId,
+          content: values.content,
+        };
+
+        await apiFetch(`/api/admin/items/${item.id}`, {
+          method: "PUT",
+          body: JSON.stringify(body),
+        });
+        toast.success("Item atualizado");
+      } else {
+        const body: CreateItemDto = {
+          name: values.name.trim(),
+          categoryId: values.categoryId,
+          content: values.content,
+        };
+
+        await apiFetch("/api/admin/items", {
+          method: "POST",
+          body: JSON.stringify(body),
+        });
+        toast.success("Item criado");
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ["items"] });
+      onOpenChange(false);
+    } catch {
+      toast.error("Algo deu errado. Tente novamente.");
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{item ? "Editar item" : "Novo item"}</DialogTitle>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nome</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="categoryId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Categoria</FormLabel>
+                  <Select
+                    onValueChange={(value) =>
+                      field.onChange(value ? Number.parseInt(value, 10) : 0)
+                    }
+                    value={field.value ? String(field.value) : undefined}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <span
+                          className={cn(
+                            field.value ? "" : "text-muted-foreground",
+                          )}
+                        >
+                          {field.value
+                            ? categories.find((category) => category.id === field.value)?.name ??
+                              String(field.value)
+                            : "Selecione uma categoria"}
+                        </span>
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={String(category.id)}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="content"
+              render={() => (
+                <FormItem>
+                  <FormLabel>Conteúdo Markdown (.md)</FormLabel>
+                  <FormControl>
+                    <Input type="file" accept=".md,text/markdown" onChange={handleFileUpload} />
+                  </FormControl>
+                  {selectedFileName ? (
+                    <p className="text-xs text-muted-foreground">Arquivo selecionado: {selectedFileName}</p>
+                  ) : item ? (
+                    <p className="text-xs text-muted-foreground">
+                      Nenhum novo arquivo selecionado.
+                    </p>
+                  ) : null}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}

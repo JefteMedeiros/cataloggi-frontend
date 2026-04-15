@@ -1,6 +1,5 @@
+import { Moon01Icon, Sun01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Sun01Icon, Moon01Icon } from "@hugeicons/core-free-icons";
-
 import { Button } from "@workspace/ui/components/button";
 import {
   DropdownMenu,
@@ -14,7 +13,7 @@ export function ModeToggle() {
   const { setTheme } = useTheme();
 
   return (
-    <div className="absolute top-3 right-3">
+    <div className="fixed top-3 right-3 z-50">
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
@@ -35,13 +34,11 @@ export function ModeToggle() {
         />
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => setTheme("light")}>
-            Light
+            Claro
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setTheme("dark")}>
-            Dark
-          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setTheme("dark")}>Escuro</DropdownMenuItem>
           <DropdownMenuItem onClick={() => setTheme("system")}>
-            System
+            Sistema
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
