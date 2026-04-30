@@ -1,4 +1,3 @@
-import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,7 +10,7 @@ import {
 } from "@workspace/ui/components/alert-dialog";
 import { useState } from "react";
 import { toast } from "sonner";
-import { apiFetch } from "../../lib/api";
+import { useDeleteItemMutation } from "../../hooks/use-items";
 import type { ItemSummary } from "../../lib/types";
 
 interface Props {
@@ -20,7 +19,7 @@ interface Props {
 }
 
 export default function DeleteItemDialog({ item, onOpenChange }: Props) {
-  const queryClient = useQueryClient();
+  const deleteItem = useDeleteItemMutation();
   const [loading, setLoading] = useState(false);
 
   async function handleConfirm() {
@@ -31,9 +30,8 @@ export default function DeleteItemDialog({ item, onOpenChange }: Props) {
     setLoading(true);
 
     try {
-      await apiFetch(`/api/admin/items/${item.id}`, { method: "DELETE" });
+      await deleteItem.mutateAsync(item.id);
       toast.success("Item excluído");
-      await queryClient.invalidateQueries({ queryKey: ["items"] });
     } catch {
       toast.error("Falha ao excluir item.");
     } finally {

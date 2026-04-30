@@ -1,5 +1,16 @@
 # Repository Guidelines
 
+## Shell Command Wrapper
+Always prefix shell commands with `rtk` when running commands for this repository.
+
+Examples:
+
+```bash
+rtk git status
+rtk pnpm run build
+rtk pnpm run check-types
+```
+
 ## Project Structure & Module Organization
 This repository is a `pnpm` workspace monorepo powered by Turborepo.
 

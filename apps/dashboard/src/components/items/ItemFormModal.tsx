@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@workspace/ui/components/button";
 import {
   Dialog,
@@ -22,24 +21,28 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@workspace/ui/components/select";
-import { useEffect, useState, type ChangeEvent } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, type ChangeEvent } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { apiFetch } from "../../lib/api";
 import { cn } from "@workspace/ui/lib/utils";
+import {
+  useCreateItemMutation,
+  useItemQuery,
+  useUpdateItemMutation,
+} from "../../hooks/use-items";
 import type {
   CategoryDto,
   CreateItemDto,
-  ItemDetail,
   ItemSummary,
   UpdateItemDto,
 } from "../../lib/types";
 
 const itemSchema = z.object({
   name: z.string().trim().min(1, "O nome é obrigatório"),
-  categoryId: z.coerce.number().min(1, "A categoria é obrigatória"),
+  categoryId: z.string().min(1, "A categoria é obrigatória"),
   content: z.string().min(1, "O conteúdo é obrigatório"),
+  fileName: z.string().optional(),
 });
 
 type ItemValues = z.infer<typeof itemSchema>;
@@ -57,19 +60,19 @@ export default function ItemFormModal({
   item,
   categories,
 }: Props) {
-  const queryClient = useQueryClient();
-  const [selectedFileName, setSelectedFileName] = useState<string>("");
+  const createItem = useCreateItemMutation();
+  const updateItem = useUpdateItemMutation();
 
   const form = useForm<ItemValues>({
     resolver: zodResolver(itemSchema),
-    defaultValues: { name: "", categoryId: 0, content: "" },
+    defaultValues: { name: "", categoryId: "", content: "", fileName: "" },
+  });
+  const selectedFileName = useWatch({
+    control: form.control,
+    name: "fileName",
   });
 
-  const { data: itemDetail } = useQuery({
-    queryKey: ["item", item?.id],
-    queryFn: () => apiFetch<ItemDetail>(`/api/admin/items/${item!.id}`),
-    enabled: open && Boolean(item),
-  });
+  const { data: itemDetail } = useItemQuery(item?.id, open && Boolean(item));
 
   useEffect(() => {
     if (!open) {
@@ -78,17 +81,16 @@ export default function ItemFormModal({
 
     if (item && itemDetail) {
       form.reset({
-        name: itemDetail.name,
+        name: itemDetail.name ?? "",
         categoryId: itemDetail.categoryId,
-        content: itemDetail.content,
+        content: itemDetail.content ?? "",
+        fileName: "",
       });
-      setSelectedFileName("");
       return;
     }
 
     if (!item) {
-      form.reset({ name: "", categoryId: 0, content: "" });
-      setSelectedFileName("");
+      form.reset({ name: "", categoryId: "", content: "", fileName: "" });
     }
   }, [form, item, itemDetail, open]);
 
@@ -105,7 +107,7 @@ export default function ItemFormModal({
       form.setValue("content", (loadEvent.target?.result as string) ?? "", {
         shouldValidate: true,
       });
-      setSelectedFileName(file.name);
+      form.setValue("fileName", file.name);
     };
 
     reader.readAsText(file);
@@ -120,10 +122,7 @@ export default function ItemFormModal({
           content: values.content,
         };
 
-        await apiFetch(`/api/admin/items/${item.id}`, {
-          method: "PUT",
-          body: JSON.stringify(body),
-        });
+        await updateItem.mutateAsync({ id: item.id, body });
         toast.success("Item atualizado");
       } else {
         const body: CreateItemDto = {
@@ -132,14 +131,10 @@ export default function ItemFormModal({
           content: values.content,
         };
 
-        await apiFetch("/api/admin/items", {
-          method: "POST",
-          body: JSON.stringify(body),
-        });
+        await createItem.mutateAsync(body);
         toast.success("Item criado");
       }
 
-      await queryClient.invalidateQueries({ queryKey: ["items"] });
       onOpenChange(false);
     } catch {
       toast.error("Algo deu errado. Tente novamente.");
@@ -176,10 +171,8 @@ export default function ItemFormModal({
                 <FormItem>
                   <FormLabel>Categoria</FormLabel>
                   <Select
-                    onValueChange={(value) =>
-                      field.onChange(value ? Number.parseInt(value, 10) : 0)
-                    }
-                    value={field.value ? String(field.value) : undefined}
+                    onValueChange={(value) => field.onChange(value ?? "")}
+                    value={field.value || undefined}
                   >
                     <FormControl>
                       <SelectTrigger className="w-full">

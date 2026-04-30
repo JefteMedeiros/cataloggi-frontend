@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@workspace/ui/components/button";
 import {
   Dialog,
@@ -20,9 +19,11 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { apiFetch } from "../../lib/api";
-import { getAutoCategoryFields } from "../../lib/category-fields";
-import type { CategoryDto, CreateCategoryDto } from "../../lib/types";
+import {
+  useCreateCategoryMutation,
+  useUpdateCategoryMutation,
+} from "../../hooks/use-categories";
+import type { CategoryDto, CreateCategoryDto, UpdateCategoryDto } from "../../lib/types";
 
 const categorySchema = z.object({
   name: z.string().trim().min(1, "O nome é obrigatório"),
@@ -41,7 +42,8 @@ export default function CategoryFormModal({
   onOpenChange,
   category,
 }: Props) {
-  const queryClient = useQueryClient();
+  const createCategory = useCreateCategoryMutation();
+  const updateCategory = useUpdateCategoryMutation();
 
   const form = useForm<CategoryValues>({
     resolver: zodResolver(categorySchema),
@@ -53,32 +55,25 @@ export default function CategoryFormModal({
       return;
     }
 
-    form.reset(category ? { name: category.name } : { name: "" });
+    form.reset(category ? { name: category.name ?? "" } : { name: "" });
   }, [category, form, open]);
 
   async function onSubmit(values: CategoryValues) {
     const name = values.name.trim();
-    const body: CreateCategoryDto = {
-      name,
-      ...getAutoCategoryFields(name),
-    };
 
     try {
       if (category) {
-        await apiFetch(`/api/admin/categories/${category.id}`, {
-          method: "PUT",
-          body: JSON.stringify(body),
-        });
+        const body: UpdateCategoryDto = { name };
+
+        await updateCategory.mutateAsync({ id: category.id, body });
         toast.success("Categoria atualizada");
       } else {
-        await apiFetch("/api/admin/categories", {
-          method: "POST",
-          body: JSON.stringify(body),
-        });
+        const body: CreateCategoryDto = { name };
+
+        await createCategory.mutateAsync(body);
         toast.success("Categoria criada");
       }
 
-      await queryClient.invalidateQueries({ queryKey: ["categories"] });
       onOpenChange(false);
     } catch {
       toast.error("Algo deu errado. Tente novamente.");

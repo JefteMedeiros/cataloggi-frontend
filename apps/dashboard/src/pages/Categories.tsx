@@ -1,11 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { useState } from "react";
 import CategoriesTable from "../components/categories/CategoriesTable";
 import CategoryFormModal from "../components/categories/CategoryFormModal";
 import DeleteCategoryDialog from "../components/categories/DeleteCategoryDialog";
-import { apiFetch } from "../lib/api";
+import { useCategoriesQuery } from "../hooks/use-categories";
 import type { CategoryDto } from "../lib/types";
 
 type ModalState =
@@ -18,18 +17,10 @@ export default function Categories() {
   const [modal, setModal] = useState<ModalState>(null);
   const [deleteTarget, setDeleteTarget] = useState<CategoryDto | null>(null);
 
-  const {
-    data: categories = [],
-    isLoading,
-    error,
-    refetch,
-  } = useQuery({
-    queryKey: ["categories"],
-    queryFn: () => apiFetch<CategoryDto[]>("/api/admin/categories"),
-  });
+  const { data: categories = [], isLoading, error, refetch } = useCategoriesQuery();
 
   const filtered = categories.filter((category) =>
-    category.name.toLowerCase().includes(search.toLowerCase())
+    (category.name ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
   return (

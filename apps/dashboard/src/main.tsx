@@ -5,10 +5,6 @@ import { Toaster } from "@workspace/ui/components/sonner";
 import App from "./App";
 import "./index.css";
 
-if (import.meta.env.DEV) {
-  await import("./mocks/api");
-}
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

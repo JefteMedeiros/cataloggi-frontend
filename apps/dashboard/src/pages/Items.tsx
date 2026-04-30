@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import {
@@ -11,8 +10,9 @@ import { useState } from "react";
 import DeleteItemDialog from "../components/items/DeleteItemDialog";
 import ItemFormModal from "../components/items/ItemFormModal";
 import ItemsTable from "../components/items/ItemsTable";
-import { apiFetch } from "../lib/api";
-import type { CategoryDto, ItemSummary } from "../lib/types";
+import { useCategoriesQuery } from "../hooks/use-categories";
+import { useItemSummariesQuery } from "../hooks/use-items";
+import type { ItemSummary } from "../lib/types";
 
 type ModalState =
   | { mode: "create" }
@@ -30,21 +30,16 @@ export default function Items() {
     isLoading: itemsLoading,
     error: itemsError,
     refetch: refetchItems,
-  } = useQuery({
-    queryKey: ["items"],
-    queryFn: () => apiFetch<ItemSummary[]>("/api/admin/items"),
-  });
+  } = useItemSummariesQuery();
 
-  const { data: categories = [] } = useQuery({
-    queryKey: ["categories"],
-    queryFn: () => apiFetch<CategoryDto[]>("/api/admin/categories"),
-  });
+  const { data: categories = [] } = useCategoriesQuery();
 
   const filtered = items.filter((item) => {
-    const matchesName = item.name.toLowerCase().includes(search.toLowerCase());
+    const matchesName = (item.name ?? "")
+      .toLowerCase()
+      .includes(search.toLowerCase());
     const matchesCategory =
-      selectedCategoryId === "all" ||
-      item.categoryId === Number.parseInt(selectedCategoryId, 10);
+      selectedCategoryId === "all" || item.categoryId === selectedCategoryId;
 
     return matchesName && matchesCategory;
   });
@@ -52,8 +47,8 @@ export default function Items() {
   const selectedCategoryLabel =
     selectedCategoryId === "all"
       ? "Todas as categorias"
-      : categories.find((category) => category.id === Number.parseInt(selectedCategoryId, 10))
-          ?.name ?? "Todas as categorias";
+      : categories.find((category) => category.id === selectedCategoryId)?.name ??
+        "Todas as categorias";
 
   return (
     <div className="space-y-6">

@@ -1,4 +1,3 @@
-import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,7 +10,7 @@ import {
 } from "@workspace/ui/components/alert-dialog";
 import { useState } from "react";
 import { toast } from "sonner";
-import { apiFetch } from "../../lib/api";
+import { useDeleteCategoryMutation } from "../../hooks/use-categories";
 import type { CategoryDto } from "../../lib/types";
 
 interface Props {
@@ -20,7 +19,7 @@ interface Props {
 }
 
 export default function DeleteCategoryDialog({ category, onOpenChange }: Props) {
-  const queryClient = useQueryClient();
+  const deleteCategory = useDeleteCategoryMutation();
   const [loading, setLoading] = useState(false);
 
   async function handleConfirm() {
@@ -31,9 +30,8 @@ export default function DeleteCategoryDialog({ category, onOpenChange }: Props) 
     setLoading(true);
 
     try {
-      await apiFetch(`/api/admin/categories/${category.id}`, { method: "DELETE" });
+      await deleteCategory.mutateAsync(category.id);
       toast.success("Categoria excluída");
-      await queryClient.invalidateQueries({ queryKey: ["categories"] });
     } catch {
       toast.error("Falha ao excluir categoria.");
     } finally {

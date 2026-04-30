@@ -1,22 +1,24 @@
+export type UUID = string;
+
 export type ItemSummary = {
-  id: number;
-  categoryId: number;
-  name: string;
-  firstLetter: string;
+  id: UUID;
+  categoryId: UUID;
+  name: string | null;
+  firstLetter: string | null;
   updatedAt: string;
 };
 
 export type ItemDetail = {
-  id: number;
-  categoryId: number;
-  name: string;
-  firstLetter: string;
-  content: string;
+  id: UUID;
+  categoryId: UUID;
+  name: string | null;
+  firstLetter: string | null;
+  content: string | null;
   updatedAt: string;
 };
 
 export type CreateItemDto = {
-  categoryId: number;
+  categoryId?: UUID | null;
   name: string;
   content: string;
 };
@@ -24,18 +26,38 @@ export type CreateItemDto = {
 export type UpdateItemDto = {
   name: string;
   content: string;
-  categoryId: number;
+  categoryId?: UUID | null;
 };
 
 export type CategoryDto = {
-  id: number;
-  name: string;
-  slug: string;
-  icon: string;
+  id: UUID;
+  name: string | null;
+  slug: string | null;
 };
 
 export type CreateCategoryDto = {
   name: string;
-  slug: string;
-  icon: string;
+};
+
+export type UpdateCategoryDto = CreateCategoryDto;
+
+export type LoginRequestDto = {
+  username: string;
+  password: string;
+};
+
+export type LoginResponseDto = {
+  token: string | null;
+  expiresAt: string;
+};
+
+export type ErrorResponseDto = {
+  message?: string | null;
+};
+
+export type ValidationProblemDetails = {
+  title?: string | null;
+  detail?: string | null;
+  status?: number | null;
+  errors?: Record<string, string[]> | null;
 };

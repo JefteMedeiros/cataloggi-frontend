@@ -13,11 +13,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
-import { apiFetch } from "../lib/api";
+import { useLoginMutation } from "../hooks/use-auth";
 import { setToken } from "../lib/auth";
+import type { LoginRequestDto } from "../lib/types";
 
 const loginSchema = z.object({
-  email: z.string().email("Digite um e-mail válido"),
+  username: z.string().trim().min(1, "O usuário é obrigatório"),
   password: z.string().min(1, "A senha é obrigatória"),
 });
 
@@ -26,20 +27,28 @@ type LoginValues = z.infer<typeof loginSchema>;
 export default function Login() {
   const navigate = useNavigate();
   const [serverError, setServerError] = useState<string | null>(null);
+  const loginMutation = useLoginMutation();
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { username: "", password: "" },
   });
 
   async function onSubmit(values: LoginValues) {
     setServerError(null);
     try {
-      const data = await apiFetch<{ token: string }>("/api/admin/login", {
-        method: "POST",
-        body: JSON.stringify(values),
-      });
-      setToken(data.token);
+      const body: LoginRequestDto = {
+        username: values.username.trim(),
+        password: values.password,
+      };
+
+      const data = await loginMutation.mutateAsync(body);
+
+      if (!data.token) {
+        throw new Error("Token ausente");
+      }
+
+      setToken(data.token, data.expiresAt);
       navigate("/items", { replace: true });
     } catch {
       setServerError("Credenciais inválidas. Tente novamente.");
@@ -60,15 +69,15 @@ export default function Login() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="email"
+              name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>E-mail</FormLabel>
+                  <FormLabel>Usuário</FormLabel>
                   <FormControl>
                     <Input
-                      type="email"
-                      placeholder="admin@exemplo.com"
-                      autoComplete="email"
+                      type="text"
+                      placeholder="admin"
+                      autoComplete="username"
                       {...field}
                     />
                   </FormControl>

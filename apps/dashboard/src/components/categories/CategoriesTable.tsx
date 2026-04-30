@@ -77,8 +77,8 @@ export default function CategoriesTable({
         <TableBody>
           {categories.map((category) => (
             <TableRow key={category.id}>
-              <TableCell>{category.name}</TableCell>
-              <TableCell>{category.slug}</TableCell>
+              <TableCell>{category.name ?? "-"}</TableCell>
+              <TableCell>{category.slug ?? "-"}</TableCell>
               <TableCell>
                 <div className="flex w-full justify-end gap-1">
                   <Button
