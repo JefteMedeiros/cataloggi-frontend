@@ -58,3 +58,6 @@ There is currently no dedicated automated test suite configured in this monorepo
 - PRs should include the affected workspaces.
 - PRs should include validation commands run (for example `pnpm run check-types && pnpm run build`).
 - PRs should include screenshots or video for visible UI changes.
+
+## Feature implementation guidelines
+- Whenever creating a new feature asked by the user, explain step by step how it was done, unless the user explicitly requests you not to. The objective is to learn how each implementation was done and why.
