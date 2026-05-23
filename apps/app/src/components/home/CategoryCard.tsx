@@ -4,7 +4,6 @@ import { ConstructionIcon, BulbIcon, CircuitBoardIcon } from '@hugeicons/core-fr
 import type { IconSvgElement } from '@hugeicons/react';
 import { cva } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
-import type { Category } from '@/lib/db';
 
 const ICON_MAP: Record<string, IconSvgElement> = {
   ConstructionIcon,
@@ -23,23 +22,23 @@ const cardVariants = cva(
 );
 
 interface CategoryCardProps {
-  category: Category;
+  href: string;
+  icon: keyof typeof ICON_MAP;
+  label: string;
   className?: string;
 }
 
-export function CategoryCard({ category, className }: CategoryCardProps) {
-  const icon = ICON_MAP[category.icon] ?? ConstructionIcon;
-
+export function CategoryCard({ href, icon, label, className }: CategoryCardProps) {
   return (
     <Link
-      to={`/category/${category.slug}`}
+      to={href}
       className={cn(cardVariants(), 'aspect-square no-underline', className)}
     >
       <span className="flex size-12 items-center justify-center rounded-xl bg-muted text-foreground transition-colors duration-200 group-hover:bg-foreground group-hover:text-background">
-        <HugeiconsIcon icon={icon} size={24} strokeWidth={1.5} />
+        <HugeiconsIcon icon={ICON_MAP[icon]} size={24} strokeWidth={1.5} />
       </span>
       <span className="text-center text-sm font-medium leading-tight tracking-tight">
-        {category.name}
+        {label}
       </span>
     </Link>
   );

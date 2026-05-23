@@ -1,21 +1,8 @@
-import { useState, useEffect } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Book04Icon } from "@hugeicons/core-free-icons";
 import { HomeGrid } from "@/components/home/HomeGrid";
-import { db } from "@/lib/db";
-import type { Category } from "@/lib/db";
 
 export default function Home() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    db.categories.toArray().then((rows) => {
-      setCategories(rows);
-      setLoading(false);
-    });
-  }, []);
-
   return (
     <div className="min-h-svh bg-background">
       <div className="mx-auto max-w-2xl px-4 py-8">
@@ -30,18 +17,7 @@ export default function Home() {
           </p>
         </header>
 
-        {loading ? (
-          <div className="grid grid-cols-2 gap-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div
-                key={i}
-                className="aspect-square animate-pulse rounded-2xl bg-muted"
-              />
-            ))}
-          </div>
-        ) : (
-          <HomeGrid categories={categories} />
-        )}
+        <HomeGrid />
       </div>
     </div>
   );

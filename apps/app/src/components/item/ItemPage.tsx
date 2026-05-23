@@ -1,33 +1,25 @@
 import { Link } from 'react-router-dom';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
-import Markdown from 'react-markdown';
 import { cn } from '@/lib/utils';
-import type { Item } from '@/lib/db';
 
-interface ItemPageProps {
-  item: Item;
-  categorySlug: string;
-}
-
-export function ItemPage({ item, categorySlug }: ItemPageProps) {
+export function ItemPage() {
   return (
     <div className="min-h-svh bg-background">
       {/* Header */}
       <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-background/90 px-4 py-3 backdrop-blur-sm">
         <Link
-          to={`/category/${categorySlug}`}
+          to="/category/placeholder"
           className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           aria-label="Voltar para categoria"
         >
           <HugeiconsIcon icon={ArrowLeft01Icon} size={18} />
         </Link>
         <h1 className="truncate text-base font-semibold tracking-tight">
-          {item.name}
+          Item
         </h1>
       </header>
 
-      {/* Markdown content */}
       <article
         className={cn(
           'mx-auto max-w-2xl px-6 py-8',
@@ -46,7 +38,16 @@ export function ItemPage({ item, categorySlug }: ItemPageProps) {
           '[&_a]:text-foreground [&_a]:underline [&_a]:underline-offset-2',
         )}
       >
-        <Markdown>{item.content}</Markdown>
+        <h1>Item</h1>
+        <p>
+          Conteúdo do item.
+        </p>
+        <h2>Seção</h2>
+        <ul>
+          <li>Informação</li>
+          <li>Informação</li>
+          <li>Informação</li>
+        </ul>
       </article>
     </div>
   );
