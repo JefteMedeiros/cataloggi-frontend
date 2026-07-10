@@ -1,11 +1,15 @@
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
-import { useState } from "react";
+import { Pagination } from "@workspace/ui/components/pagination";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import CategoriesTable from "../components/categories/CategoriesTable";
 import CategoryFormModal from "../components/categories/CategoryFormModal";
 import DeleteCategoryDialog from "../components/categories/DeleteCategoryDialog";
 import { useCategoriesQuery } from "../hooks/use-categories";
 import type { CategoryDto } from "../lib/types";
+
+const PAGE_SIZE = 10;
 
 type ModalState =
   | { mode: "create" }
@@ -14,14 +18,34 @@ type ModalState =
 
 export default function Categories() {
   const [search, setSearch] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
   const [modal, setModal] = useState<ModalState>(null);
   const [deleteTarget, setDeleteTarget] = useState<CategoryDto | null>(null);
 
-  const { data: categories = [], isLoading, error, refetch } = useCategoriesQuery();
+  const page = Math.max(1, Number(searchParams.get("page")) || 1);
 
-  const filtered = categories.filter((category) =>
-    (category.name ?? "").toLowerCase().includes(search.toLowerCase())
-  );
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedSearch(search), 500);
+    return () => clearTimeout(timeout);
+  }, [search]);
+
+  const {
+    data: response,
+    isLoading,
+    error,
+    refetch,
+  } = useCategoriesQuery({ page, pageSize: PAGE_SIZE, search: debouncedSearch || undefined });
+
+  const categories = response?.items ?? [];
+  const totalPages = response?.totalPages ?? 0;
+
+  function goToPage(next: number) {
+    setSearchParams((prev) => {
+      prev.set("page", String(next));
+      return prev;
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -30,9 +54,15 @@ export default function Categories() {
           className="sm:flex-1"
           placeholder="Buscar categorias..."
           value={search}
-          onChange={(event) => setSearch(event.target.value)}
+          onChange={(event) => {
+            setSearch(event.target.value);
+            goToPage(1);
+          }}
         />
-        <Button className="sm:shrink-0" onClick={() => setModal({ mode: "create" })}>
+        <Button
+          className="sm:shrink-0"
+          onClick={() => setModal({ mode: "create" })}
+        >
           Nova categoria
         </Button>
       </div>
@@ -46,12 +76,14 @@ export default function Categories() {
         </div>
       ) : (
         <CategoriesTable
-          categories={filtered}
+          categories={categories}
           isLoading={isLoading}
           onEdit={(category) => setModal({ mode: "edit", category })}
           onDelete={(category) => setDeleteTarget(category)}
         />
       )}
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={goToPage} />
 
       <CategoryFormModal
         open={modal !== null}

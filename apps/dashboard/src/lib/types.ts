@@ -33,6 +33,7 @@ export type CategoryDto = {
   id: UUID;
   name: string | null;
   slug: string | null;
+  updatedAt: string;
 };
 
 export type CreateCategoryDto = {
@@ -60,4 +61,12 @@ export type ValidationProblemDetails = {
   detail?: string | null;
   status?: number | null;
   errors?: Record<string, string[]> | null;
+};
+
+export type PaginatedResponse<T> = {
+  items: T[];
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  totalItems: number;
 };

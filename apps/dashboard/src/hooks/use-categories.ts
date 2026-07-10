@@ -3,16 +3,36 @@ import { apiFetch } from "../lib/api";
 import type {
   CategoryDto,
   CreateCategoryDto,
+  PaginatedResponse,
   UpdateCategoryDto,
   UUID,
 } from "../lib/types";
 
-export const categoriesQueryKey = ["categories"] as const;
+export type CategoriesPageParams = {
+  page: number;
+  pageSize: number;
+  search?: string;
+};
 
-export function useCategoriesQuery() {
+export const categoriesQueryKey = (params?: CategoriesPageParams) =>
+  params ? (["categories", params] as const) : (["categories"] as const);
+
+export function useCategoriesQuery(params: CategoriesPageParams) {
   return useQuery({
-    queryKey: categoriesQueryKey,
-    queryFn: () => apiFetch<CategoryDto[]>("/api/categories"),
+    queryKey: categoriesQueryKey(params),
+    queryFn: async () => {
+      const searchParams = new URLSearchParams({
+        page: String(params.page),
+        pageSize: String(params.pageSize),
+      });
+      if (params.search) {
+        searchParams.set("search", params.search);
+      }
+      const res = await apiFetch<PaginatedResponse<CategoryDto>>(
+        `/api/categories?${searchParams.toString()}`,
+      );
+      return res;
+    },
   });
 }
 
@@ -26,7 +46,7 @@ export function useCreateCategoryMutation() {
         body: JSON.stringify(body),
       }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: categoriesQueryKey });
+      void queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
   });
 }
@@ -41,7 +61,7 @@ export function useUpdateCategoryMutation() {
         body: JSON.stringify(body),
       }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: categoriesQueryKey });
+      void queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
   });
 }
@@ -53,7 +73,7 @@ export function useDeleteCategoryMutation() {
     mutationFn: (id: UUID) =>
       apiFetch<void>(`/api/categories/${id}`, { method: "DELETE" }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: categoriesQueryKey });
+      void queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
   });
 }

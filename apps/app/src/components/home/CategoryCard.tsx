@@ -3,6 +3,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { ConstructionIcon, BulbIcon, CircuitBoardIcon } from '@hugeicons/core-free-icons';
 import type { IconSvgElement } from '@hugeicons/react';
 import { cva } from 'class-variance-authority';
+import type { Category } from '@/lib/db';
 import { cn } from '@/lib/utils';
 
 const ICON_MAP: Record<string, IconSvgElement> = {
@@ -22,23 +23,26 @@ const cardVariants = cva(
 );
 
 interface CategoryCardProps {
-  href: string;
-  icon: keyof typeof ICON_MAP;
-  label: string;
+  category: Category;
+  iconIndex: number;
   className?: string;
 }
 
-export function CategoryCard({ href, icon, label, className }: CategoryCardProps) {
+const ICON_NAMES = Object.keys(ICON_MAP) as Array<keyof typeof ICON_MAP>;
+
+export function CategoryCard({ category, iconIndex, className }: CategoryCardProps) {
+  const icon = ICON_NAMES[iconIndex % ICON_NAMES.length];
+
   return (
     <Link
-      to={href}
+      to={`/category/${category.slug}`}
       className={cn(cardVariants(), 'aspect-square no-underline', className)}
     >
       <span className="flex size-12 items-center justify-center rounded-xl bg-muted text-foreground transition-colors duration-200 group-hover:bg-foreground group-hover:text-background">
         <HugeiconsIcon icon={ICON_MAP[icon]} size={24} strokeWidth={1.5} />
       </span>
       <span className="text-center text-sm font-medium leading-tight tracking-tight">
-        {label}
+        {category.name}
       </span>
     </Link>
   );

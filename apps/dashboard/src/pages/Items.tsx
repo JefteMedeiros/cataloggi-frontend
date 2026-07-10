@@ -1,18 +1,22 @@
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
+import { Pagination } from "@workspace/ui/components/pagination";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
 } from "@workspace/ui/components/select";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import DeleteItemDialog from "../components/items/DeleteItemDialog";
 import ItemFormModal from "../components/items/ItemFormModal";
 import ItemsTable from "../components/items/ItemsTable";
 import { useCategoriesQuery } from "../hooks/use-categories";
 import { useItemSummariesQuery } from "../hooks/use-items";
 import type { ItemSummary } from "../lib/types";
+
+const PAGE_SIZE = 10;
 
 type ModalState =
   | { mode: "create" }
@@ -22,33 +26,47 @@ type ModalState =
 export default function Items() {
   const [search, setSearch] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState("all");
+  const [searchParams, setSearchParams] = useSearchParams();
   const [modal, setModal] = useState<ModalState>(null);
   const [deleteTarget, setDeleteTarget] = useState<ItemSummary | null>(null);
 
+  const page = Math.max(1, Number(searchParams.get("page")) || 1);
+
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedSearch(search), 500);
+    return () => clearTimeout(timeout);
+  }, [search]);
+
   const {
-    data: items = [],
+    data: response,
     isLoading: itemsLoading,
     error: itemsError,
     refetch: refetchItems,
-  } = useItemSummariesQuery();
+  } = useItemSummariesQuery({ page, pageSize: PAGE_SIZE, search: debouncedSearch || undefined });
 
-  const { data: categories = [] } = useCategoriesQuery();
+  const items = response?.items ?? [];
+  const totalPages = response?.totalPages ?? 0;
 
-  const filtered = items.filter((item) => {
-    const matchesName = (item.name ?? "")
-      .toLowerCase()
-      .includes(search.toLowerCase());
-    const matchesCategory =
-      selectedCategoryId === "all" || item.categoryId === selectedCategoryId;
+  const { data: categoriesResponse } = useCategoriesQuery({ page: 1, pageSize: 1000 });
+  const categories = categoriesResponse?.items ?? [];
 
-    return matchesName && matchesCategory;
-  });
+  const filtered = items.filter((item) =>
+    selectedCategoryId === "all" || item.categoryId === selectedCategoryId,
+  );
 
   const selectedCategoryLabel =
     selectedCategoryId === "all"
       ? "Todas as categorias"
-      : categories.find((category) => category.id === selectedCategoryId)?.name ??
-        "Todas as categorias";
+      : (categories.find((category) => category.id === selectedCategoryId)
+          ?.name ?? "Todas as categorias");
+
+  function goToPage(next: number) {
+    setSearchParams((prev) => {
+      prev.set("page", String(next));
+      return prev;
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -58,11 +76,17 @@ export default function Items() {
             className="sm:flex-1"
             placeholder="Buscar itens..."
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              goToPage(1);
+            }}
           />
           <Select
             value={selectedCategoryId}
-            onValueChange={(value) => setSelectedCategoryId(value ?? "all")}
+            onValueChange={(value) => {
+              setSelectedCategoryId(value ?? "all");
+              goToPage(1);
+            }}
           >
             <SelectTrigger className="sm:w-56">
               <span>{selectedCategoryLabel}</span>
@@ -77,7 +101,10 @@ export default function Items() {
             </SelectContent>
           </Select>
         </div>
-        <Button className="sm:shrink-0" onClick={() => setModal({ mode: "create" })}>
+        <Button
+          className="sm:shrink-0"
+          onClick={() => setModal({ mode: "create" })}
+        >
           Novo item
         </Button>
       </div>
@@ -98,6 +125,12 @@ export default function Items() {
           onDelete={(item) => setDeleteTarget(item)}
         />
       )}
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={goToPage}
+      />
 
       <ItemFormModal
         open={modal !== null}

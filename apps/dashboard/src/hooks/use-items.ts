@@ -4,17 +4,37 @@ import type {
   CreateItemDto,
   ItemDetail,
   ItemSummary,
+  PaginatedResponse,
   UpdateItemDto,
   UUID,
 } from "../lib/types";
 
-export const itemsQueryKey = ["items"] as const;
+export type ItemsPageParams = {
+  page: number;
+  pageSize: number;
+  search?: string;
+};
+
+export const itemsQueryKey = (params?: ItemsPageParams) =>
+  params ? (["items", params] as const) : (["items"] as const);
 export const itemQueryKey = (id: UUID | undefined) => ["item", id] as const;
 
-export function useItemSummariesQuery() {
+export function useItemSummariesQuery(params: ItemsPageParams) {
   return useQuery({
-    queryKey: itemsQueryKey,
-    queryFn: () => apiFetch<ItemSummary[]>("/api/items/summaries"),
+    queryKey: itemsQueryKey(params),
+    queryFn: async () => {
+      const searchParams = new URLSearchParams({
+        page: String(params.page),
+        pageSize: String(params.pageSize),
+      });
+      if (params.search) {
+        searchParams.set("search", params.search);
+      }
+      const res = await apiFetch<PaginatedResponse<ItemSummary>>(
+        `/api/items/summaries?${searchParams.toString()}`,
+      );
+      return res;
+    },
   });
 }
 
@@ -36,7 +56,7 @@ export function useCreateItemMutation() {
         body: JSON.stringify(body),
       }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: itemsQueryKey });
+      void queryClient.invalidateQueries({ queryKey: ["items"] });
     },
   });
 }
@@ -51,7 +71,7 @@ export function useUpdateItemMutation() {
         body: JSON.stringify(body),
       }),
     onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: itemsQueryKey });
+      void queryClient.invalidateQueries({ queryKey: ["items"] });
       void queryClient.invalidateQueries({ queryKey: itemQueryKey(variables.id) });
     },
   });
@@ -63,7 +83,7 @@ export function useDeleteItemMutation() {
   return useMutation({
     mutationFn: (id: UUID) => apiFetch<void>(`/api/items/${id}`, { method: "DELETE" }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: itemsQueryKey });
+      void queryClient.invalidateQueries({ queryKey: ["items"] });
     },
   });
 }

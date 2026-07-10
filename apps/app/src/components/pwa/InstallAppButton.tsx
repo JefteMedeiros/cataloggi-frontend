@@ -13,7 +13,11 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 function isStandalone() {
-  return window.matchMedia("(display-mode: standalone)").matches;
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    // @ts-expect-error navigator.standalone is iOS Safari specific
+    navigator.standalone === true
+  );
 }
 
 export function InstallAppButton() {
@@ -57,7 +61,7 @@ export function InstallAppButton() {
     setInstallPrompt(null);
   };
 
-  if (installed) return null;
+  if (installed || !installPrompt) return null;
 
   return (
     <div className="fixed left-4 top-4 z-20">
