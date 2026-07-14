@@ -1,91 +1,127 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { syncCategories } from "@/lib/categories-sync";
-import { getAllCategories, type Category } from "@/lib/db";
+import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api";
+import { getAllCategories, putCategories, putItems } from "@/lib/db";
+import type { Category, ItemDetail, PaginatedResponse } from "@/lib/types";
+import { useOnlineStatus } from "./use-online-status";
 
-interface UseCategoriesResult {
-  data: Category[];
-  isLoading: boolean;
-  isError: boolean;
-  refetch: () => Promise<void>;
+const PAGE_SIZE = 100;
+
+async function fetchAllCategories(): Promise<Category[]> {
+  const all: Category[] = [];
+  let page = 1;
+  let totalPages = 1;
+
+  do {
+    const res = await apiFetch<PaginatedResponse<Category>>(
+      `/api/categories?page=${page}&pageSize=${PAGE_SIZE}`,
+    );
+    all.push(...res.items);
+    totalPages = res.totalPages;
+    page += 1;
+  } while (page <= totalPages);
+
+  return all;
 }
 
-function isOnline(): boolean {
-  return typeof navigator === "undefined" || navigator.onLine;
+async function fetchAllItems(): Promise<ItemDetail[]> {
+  const all: ItemDetail[] = [];
+  let page = 1;
+  let totalPages = 1;
+
+  do {
+    const res = await apiFetch<PaginatedResponse<ItemDetail>>(
+      `/api/items?page=${page}&pageSize=${PAGE_SIZE}`,
+    );
+    all.push(...res.items);
+    totalPages = res.totalPages;
+    page += 1;
+  } while (page <= totalPages);
+
+  return all;
 }
 
-export function useCategories(): UseCategoriesResult {
+export function useCategories() {
+  const queryClient = useQueryClient();
+  const online = useOnlineStatus();
   const [data, setData] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isError, setIsError] = useState(false);
-  const syncPromiseRef = useRef<Promise<void> | null>(null);
-
-  const loadCachedCategories = useCallback(async () => {
-    const categories = await getAllCategories();
-    setData(categories);
-    return categories;
-  }, []);
-
-  const runSync = useCallback(async () => {
-    if (!isOnline()) {
-      setIsError(false);
-      return;
-    }
-
-    syncPromiseRef.current ??= syncCategories().finally(() => {
-      syncPromiseRef.current = null;
-    });
-
-    await syncPromiseRef.current;
-  }, []);
-
-  const refetch = useCallback(async () => {
-    const cachedCategories = await loadCachedCategories();
-
-    if (!isOnline()) {
-      setIsLoading(false);
-      setIsError(false);
-      return;
-    }
-
-    setIsLoading(cachedCategories.length === 0);
-
-    try {
-      await runSync();
-      await loadCachedCategories();
-      setIsError(false);
-    } catch {
-      setIsError(true);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [loadCachedCategories, runSync]);
+  const [cachedLoaded, setCachedLoaded] = useState(false);
 
   useEffect(() => {
-    let isMounted = true;
+    let cancelled = false;
 
     async function load() {
-      try {
-        await refetch();
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+      const cached = await getAllCategories();
+      if (!cancelled) {
+        setData(cached);
+        setCachedLoaded(true);
       }
     }
 
     void load();
 
-    function handleOnline() {
-      void refetch();
-    }
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-    window.addEventListener("online", handleOnline);
+  const query = useQuery({
+    queryKey: ["data-sync"],
+    queryFn: async () => {
+      const [categories, items] = await Promise.all([
+        fetchAllCategories(),
+        fetchAllItems(),
+      ]);
+      await Promise.all([putCategories(categories), putItems(items)]);
+      return { categories, items };
+    },
+    enabled: online,
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
+
+  useEffect(() => {
+    if (!query.data) return;
+
+    let cancelled = false;
+
+    void getAllCategories().then((categories) => {
+      if (!cancelled) setData(categories);
+    });
 
     return () => {
-      isMounted = false;
-      window.removeEventListener("online", handleOnline);
+      cancelled = true;
     };
-  }, [refetch]);
+  }, [query.data]);
 
-  return { data, isLoading, isError, refetch };
+  useEffect(() => {
+    if (!query.isError) return;
+
+    let cancelled = false;
+
+    void getAllCategories().then((categories) => {
+      if (!cancelled) setData(categories);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [query.isError]);
+
+  useEffect(() => {
+    if (online) {
+      void queryClient.invalidateQueries({ queryKey: ["data-sync"] });
+    }
+  }, [online, queryClient]);
+
+  const isLoading = !cachedLoaded;
+
+  return {
+    data,
+    isLoading,
+    isError: query.isError,
+    online,
+    refetch: () =>
+      queryClient.invalidateQueries({ queryKey: ["data-sync"] }),
+  };
 }
