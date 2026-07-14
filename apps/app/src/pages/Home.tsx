@@ -10,6 +10,7 @@ import { Settings } from "./Settings";
 export default function Home() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState(search);
+  const [activeTab, setActiveTab] = useState("inicio");
 
   useEffect(() => {
     const timeout = setTimeout(() => setDebouncedSearch(search), 500);
@@ -29,8 +30,12 @@ export default function Home() {
   return (
     <div className="min-h-svh bg-background">
       <div className="mx-auto max-w-2xl px-4 py-8">
-        <Tabs defaultValue="inicio" className="flex flex-col">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col">
           <header className="sticky top-0 z-50 flex flex-col gap-4 bg-background py-8">
+            <TabsList>
+              <TabsTrigger value="inicio">Início</TabsTrigger>
+              <TabsTrigger value="configuracoes">Configurações</TabsTrigger>
+            </TabsList>
             <div>
               <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight text-foreground">
                 <HugeiconsIcon icon={Book04Icon} size={28} strokeWidth={1.5} />
@@ -40,15 +45,13 @@ export default function Home() {
                 Catálogo de materiais para projetos de iluminação pública
               </p>
             </div>
-            <TabsList>
-              <TabsTrigger value="inicio">Início</TabsTrigger>
-              <TabsTrigger value="configuracoes">Configurações</TabsTrigger>
-            </TabsList>
-            <Input
-              placeholder="Buscar categorias..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            {activeTab === "inicio" && (
+              <Input
+                placeholder="Buscar categorias..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            )}
           </header>
 
           <TabsContent value="inicio">

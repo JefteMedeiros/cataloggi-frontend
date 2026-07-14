@@ -43,20 +43,22 @@ export function Settings() {
           </span>
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => void sync()}
-          disabled={!online || isSyncing}
-          className="w-fit gap-2"
-        >
-          <HugeiconsIcon
-            icon={Refresh01Icon}
-            size={14}
-            className={isSyncing ? "animate-spin" : ""}
-          />
-          Sincronizar agora
-        </Button>
+        <div className="flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void sync()}
+            disabled={!online || isSyncing}
+            className="gap-2"
+          >
+            <HugeiconsIcon
+              icon={Refresh01Icon}
+              size={14}
+              className={isSyncing ? "animate-spin" : ""}
+            />
+            Sincronizar agora
+          </Button>
+        </div>
       </div>
     </div>
   );
