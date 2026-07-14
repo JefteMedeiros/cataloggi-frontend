@@ -13,7 +13,7 @@ export function ModeToggle() {
   const { setTheme } = useTheme();
 
   return (
-    <div className="fixed top-3 right-3 z-50">
+    <div>
       <DropdownMenu>
         <DropdownMenuTrigger
           render={

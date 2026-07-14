@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Book04Icon } from "@hugeicons/core-free-icons";
 import { Input } from "@workspace/ui/components/input";
@@ -5,7 +6,23 @@ import { HomeGrid } from "@/components/home/HomeGrid";
 import { useCategories } from "@/hooks/use-categories";
 
 export default function Home() {
-  const { data: categories, isLoading, isError, refetch } = useCategories();
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedSearch(search), 500);
+    return () => clearTimeout(timeout);
+  }, [search]);
+
+  const { data: allCategories, isLoading, isError, refetch } = useCategories();
+
+  const categories = useMemo(() => {
+    if (!debouncedSearch) return allCategories;
+    const term = debouncedSearch.toLowerCase();
+    return allCategories.filter(
+      (c) => c.name.toLowerCase().includes(term) || c.slug.toLowerCase().includes(term),
+    );
+  }, [allCategories, debouncedSearch]);
 
   return (
     <div className="min-h-svh bg-background">
@@ -20,7 +37,11 @@ export default function Home() {
               Catálogo de materiais para projetos de iluminação pública
             </p>
           </div>
-          <Input disabled placeholder="Buscar categorias..." />
+          <Input
+            placeholder="Buscar categorias..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </header>
 
         <HomeGrid
