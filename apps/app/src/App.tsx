@@ -1,6 +1,7 @@
 import { WifiOff01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AppRouter } from "@/router";
+import { FirstSyncNotice } from "@/components/first-sync-notice";
 import { InstallAppButton } from "@/components/pwa/InstallAppButton";
 import { ModeToggle } from "@/components/mode-toggle";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -22,6 +23,7 @@ export default function App() {
         <ModeToggle />
       </div>
       <InstallAppButton />
+      <FirstSyncNotice />
     </ThemeProvider>
   );
 }
