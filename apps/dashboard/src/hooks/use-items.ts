@@ -31,7 +31,7 @@ export function useItemSummariesQuery(params: ItemsPageParams) {
         searchParams.set("search", params.search);
       }
       const res = await apiFetch<PaginatedResponse<ItemSummary>>(
-        `/api/items/summaries?${searchParams.toString()}`,
+        `/api/item-summaries?${searchParams.toString()}`,
       );
       return res;
     },
@@ -41,7 +41,7 @@ export function useItemSummariesQuery(params: ItemsPageParams) {
 export function useItemQuery(id: UUID | undefined, enabled: boolean) {
   return useQuery({
     queryKey: itemQueryKey(id),
-    queryFn: () => apiFetch<ItemDetail>(`/api/items/${id}`),
+    queryFn: () => apiFetch<ItemDetail>(`/api/item/${id}`),
     enabled: enabled && Boolean(id),
   });
 }
@@ -51,8 +51,7 @@ export function useCreateItemMutation() {
 
   return useMutation({
     mutationFn: (body: CreateItemDto) =>
-      apiFetch<ItemDetail>("/api/items", {
-        method: "POST",
+      apiFetch<ItemDetail>("/api/create-item", {
         body: JSON.stringify(body),
       }),
     onSuccess: () => {
@@ -66,8 +65,7 @@ export function useUpdateItemMutation() {
 
   return useMutation({
     mutationFn: ({ id, body }: { id: UUID; body: UpdateItemDto }) =>
-      apiFetch<ItemDetail>(`/api/items/${id}`, {
-        method: "PUT",
+      apiFetch<ItemDetail>(`/api/update-item/${id}`, {
         body: JSON.stringify(body),
       }),
     onSuccess: (_data, variables) => {
@@ -81,7 +79,7 @@ export function useDeleteItemMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: UUID) => apiFetch<void>(`/api/items/${id}`, { method: "DELETE" }),
+    mutationFn: (id: UUID) => apiFetch<void>(`/api/delete-item/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["items"] });
     },

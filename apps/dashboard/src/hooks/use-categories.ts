@@ -41,8 +41,7 @@ export function useCreateCategoryMutation() {
 
   return useMutation({
     mutationFn: (body: CreateCategoryDto) =>
-      apiFetch<CategoryDto>("/api/categories", {
-        method: "POST",
+      apiFetch<CategoryDto>("/api/create-category", {
         body: JSON.stringify(body),
       }),
     onSuccess: () => {
@@ -56,8 +55,7 @@ export function useUpdateCategoryMutation() {
 
   return useMutation({
     mutationFn: ({ id, body }: { id: UUID; body: UpdateCategoryDto }) =>
-      apiFetch<CategoryDto>(`/api/categories/${id}`, {
-        method: "PUT",
+      apiFetch<CategoryDto>(`/api/update-category/${id}`, {
         body: JSON.stringify(body),
       }),
     onSuccess: () => {
@@ -71,7 +69,7 @@ export function useDeleteCategoryMutation() {
 
   return useMutation({
     mutationFn: (id: UUID) =>
-      apiFetch<void>(`/api/categories/${id}`, { method: "DELETE" }),
+      apiFetch<void>(`/api/delete-category/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["categories"] });
     },

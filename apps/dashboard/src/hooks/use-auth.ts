@@ -5,7 +5,7 @@ import type { LoginRequestDto, LoginResponseDto } from "../lib/types";
 export function useLoginMutation() {
   return useMutation({
     mutationFn: (body: LoginRequestDto) =>
-      apiFetch<LoginResponseDto>("/api/auth/login", {
+      apiFetch<LoginResponseDto>("/api/login", {
         method: "POST",
         body: JSON.stringify(body),
         redirectOnUnauthorized: false,
