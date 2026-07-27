@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { canAutoSync, getLastSyncTime, performSync } from "@/lib/sync";
+import {
+  canAutoSync,
+  getLastSyncTime,
+  performIncrementalSync,
+  type SyncProgress,
+} from "@/lib/sync";
 import { useOnlineStatus } from "./use-online-status";
 
 const FIRST_SYNC_DONE_KEY = "cataloggi:first-sync-done";
@@ -10,19 +15,27 @@ export function useSync() {
   const queryClient = useQueryClient();
   const online = useOnlineStatus();
   const [isSyncing, setIsSyncing] = useState(false);
+  const [progress, setProgress] = useState<SyncProgress | null>(null);
   const [lastSync, setLastSync] = useState<Date | null>(getLastSyncTime);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const syncingRef = useRef(false);
 
   const sync = useCallback(
     async (options?: { silent?: boolean }) => {
-      if (!online || isSyncing) return;
+      if (!online || syncingRef.current) return;
 
+      syncingRef.current = true;
       setIsSyncing(true);
+      setProgress({ step: "categories", percentage: 0 });
       try {
-        const syncTime = await performSync();
-        setLastSync(syncTime);
+        await performIncrementalSync((p) => setProgress(p));
+        setLastSync(getLastSyncTime());
 
-        await queryClient.invalidateQueries({ queryKey: ["data-sync"] });
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["categories"] }),
+          queryClient.invalidateQueries({ queryKey: ["items"] }),
+          queryClient.invalidateQueries({ queryKey: ["item"] }),
+        ]);
 
         if (!options?.silent) {
           toast.success("Sincronização concluída");
@@ -32,10 +45,12 @@ export function useSync() {
           toast.error("Falha ao sincronizar dados");
         }
       } finally {
+        syncingRef.current = false;
         setIsSyncing(false);
+        setProgress(null);
       }
     },
-    [online, isSyncing, queryClient],
+    [online, queryClient],
   );
 
   useEffect(() => {
@@ -66,6 +81,7 @@ export function useSync() {
 
   return {
     isSyncing,
+    progress,
     lastSync,
     sync,
   };
