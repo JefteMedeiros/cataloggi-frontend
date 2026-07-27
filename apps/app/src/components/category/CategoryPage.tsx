@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Input } from "@workspace/ui/components/input";
@@ -7,11 +8,9 @@ import { AlphaIndex } from "@/components/category/AlphaIndex";
 import { ItemList } from "@/components/category/ItemList";
 import { getCategoryBySlug } from "@/lib/db";
 import { useItemsByCategoryId } from "@/hooks/use-items";
-import type { Category } from "@/lib/types";
 
 export function CategoryPage() {
   const { slug } = useParams<{ slug: string }>();
-  const [category, setCategory] = useState<Category | null>(null);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState(search);
 
@@ -20,21 +19,13 @@ export function CategoryPage() {
     return () => clearTimeout(timeout);
   }, [search]);
 
-  useEffect(() => {
-    if (!slug) return;
+  const { data: category } = useQuery({
+    queryKey: ["category", slug],
+    queryFn: () => getCategoryBySlug(slug!),
+    enabled: Boolean(slug),
+  });
 
-    let cancelled = false;
-
-    void getCategoryBySlug(slug).then((cat) => {
-      if (!cancelled) setCategory(cat ?? null);
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [slug]);
-
-  const { data: allItems, isLoading } = useItemsByCategoryId(category?.id);
+  const { data: allItems = [], isLoading } = useItemsByCategoryId(category?.id);
 
   const items = useMemo(() => {
     if (!debouncedSearch) return allItems;

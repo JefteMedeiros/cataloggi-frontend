@@ -1,4 +1,3 @@
-import { Button } from "@workspace/ui/components/button";
 import { CategoryCard } from "@/components/home/CategoryCard";
 import type { Category } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -6,16 +5,12 @@ import { cn } from "@/lib/utils";
 interface HomeGridProps {
   categories: Category[];
   isLoading: boolean;
-  isError: boolean;
-  onRetry: () => void;
   className?: string;
 }
 
 export function HomeGrid({
   categories,
   isLoading,
-  isError,
-  onRetry,
   className,
 }: HomeGridProps) {
   if (isLoading) {
@@ -27,17 +22,6 @@ export function HomeGrid({
             className="aspect-square animate-pulse rounded-2xl border border-border bg-muted"
           />
         ))}
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className={cn("flex flex-col items-center gap-3 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-8 text-center text-sm text-destructive", className)}>
-        <span>Falha ao atualizar categorias.</span>
-        <Button variant="ghost" size="sm" onClick={onRetry}>
-          Tentar novamente
-        </Button>
       </div>
     );
   }
