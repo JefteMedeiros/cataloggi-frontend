@@ -1,36 +1,21 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
+import Markdown from "react-markdown";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 import { db } from "@/lib/db";
-import type { ItemDetail } from "@/lib/types";
+import { useItemById } from "@/hooks/use-items";
 
 export function ItemPage() {
   const { id } = useParams<{ id: string }>();
-  const [item, setItem] = useState<ItemDetail | null>(null);
-  const [categorySlug, setCategorySlug] = useState<string | null>(null);
+  const { data: item } = useItemById(id);
 
-  useEffect(() => {
-    if (!id) return;
-
-    let cancelled = false;
-
-    void db.items.get(id).then((found) => {
-      if (cancelled) return;
-      setItem(found ?? null);
-
-      if (found) {
-        void db.categories.get(found.categoryId).then((cat) => {
-          if (!cancelled) setCategorySlug(cat?.slug ?? null);
-        });
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [id]);
+  const { data: categorySlug } = useQuery({
+    queryKey: ["category", item?.categoryId],
+    queryFn: () => db.categories.get(item!.categoryId).then((cat) => cat?.slug ?? null),
+    enabled: Boolean(item?.categoryId),
+  });
 
   const backHref = categorySlug ? `/category/${categorySlug}` : "/";
 
@@ -68,7 +53,7 @@ export function ItemPage() {
         )}
       >
         {item?.content ? (
-          <div dangerouslySetInnerHTML={{ __html: item.content }} />
+          <Markdown>{item.content}</Markdown>
         ) : (
           <p className="text-sm text-muted-foreground">
             Conteúdo não disponível.
