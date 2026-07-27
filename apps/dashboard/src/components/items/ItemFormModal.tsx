@@ -41,7 +41,7 @@ import type {
 const itemSchema = z.object({
   name: z.string().trim().min(1, "O nome é obrigatório"),
   categoryId: z.string().min(1, "A categoria é obrigatória"),
-  content: z.string().min(1, "O conteúdo é obrigatório"),
+  content: z.string().optional(),
   fileName: z.string().optional(),
 });
 
@@ -119,12 +119,17 @@ export default function ItemFormModal({
         const body: UpdateItemDto = {
           name: values.name.trim(),
           categoryId: values.categoryId,
-          content: values.content,
+          ...(values.content ? { content: values.content } : {}),
         };
 
         await updateItem.mutateAsync({ id: item.id, body });
         toast.success("Item atualizado");
       } else {
+        if (!values.content) {
+          toast.error("O conteúdo é obrigatório para criar um item.");
+          return;
+        }
+
         const body: CreateItemDto = {
           name: values.name.trim(),
           categoryId: values.categoryId,

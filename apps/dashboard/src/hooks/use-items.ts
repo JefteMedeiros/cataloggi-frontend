@@ -52,6 +52,7 @@ export function useCreateItemMutation() {
   return useMutation({
     mutationFn: (body: CreateItemDto) =>
       apiFetch<ItemDetail>("/api/create-item", {
+        method: "POST",
         body: JSON.stringify(body),
       }),
     onSuccess: () => {
@@ -66,6 +67,7 @@ export function useUpdateItemMutation() {
   return useMutation({
     mutationFn: ({ id, body }: { id: UUID; body: UpdateItemDto }) =>
       apiFetch<ItemDetail>(`/api/update-item/${id}`, {
+        method: "PUT",
         body: JSON.stringify(body),
       }),
     onSuccess: (_data, variables) => {

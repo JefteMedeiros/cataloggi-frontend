@@ -25,7 +25,7 @@ export type CreateItemDto = {
 
 export type UpdateItemDto = {
   name: string;
-  content: string;
+  content?: string | null;
   categoryId?: UUID | null;
 };
 

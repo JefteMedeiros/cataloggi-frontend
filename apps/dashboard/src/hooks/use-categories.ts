@@ -42,6 +42,7 @@ export function useCreateCategoryMutation() {
   return useMutation({
     mutationFn: (body: CreateCategoryDto) =>
       apiFetch<CategoryDto>("/api/create-category", {
+        method: "POST",
         body: JSON.stringify(body),
       }),
     onSuccess: () => {
@@ -56,6 +57,7 @@ export function useUpdateCategoryMutation() {
   return useMutation({
     mutationFn: ({ id, body }: { id: UUID; body: UpdateCategoryDto }) =>
       apiFetch<CategoryDto>(`/api/update-category/${id}`, {
+        method: "PUT",
         body: JSON.stringify(body),
       }),
     onSuccess: () => {
