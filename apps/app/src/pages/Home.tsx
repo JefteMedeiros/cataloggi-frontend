@@ -17,7 +17,7 @@ export default function Home() {
     return () => clearTimeout(timeout);
   }, [search]);
 
-  const { data: allCategories, isLoading, isError, refetch } = useCategories();
+  const { data: allCategories = [], isLoading } = useCategories();
 
   const categories = useMemo(() => {
     if (!debouncedSearch) return allCategories;
@@ -58,8 +58,6 @@ export default function Home() {
             <HomeGrid
               categories={categories}
               isLoading={isLoading}
-              isError={isError}
-              onRetry={refetch}
             />
           </TabsContent>
 

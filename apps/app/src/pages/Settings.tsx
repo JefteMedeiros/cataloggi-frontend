@@ -1,11 +1,19 @@
 import { useSync } from "@/hooks/use-sync";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { Button } from "@workspace/ui/components/button";
+import { Progress } from "@workspace/ui/components/progress";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Refresh01Icon, WifiOff01Icon } from "@hugeicons/core-free-icons";
 
+const STEP_LABELS = {
+  categories: "Sincronizando categorias...",
+  "items-summary": "Buscando resumo dos itens...",
+  "items-details": "Carregando detalhes dos itens...",
+  done: "Concluído",
+};
+
 export function Settings() {
-  const { isSyncing, lastSync, sync } = useSync();
+  const { isSyncing, progress, lastSync, sync } = useSync();
   const online = useOnlineStatus();
 
   return (
@@ -36,7 +44,7 @@ export function Settings() {
                 Offline
               </span>
             ) : isSyncing ? (
-              "Sincronizando..."
+              STEP_LABELS[progress?.step ?? "categories"]
             ) : (
               "Pronto"
             )}
@@ -59,6 +67,15 @@ export function Settings() {
             Sincronizar agora
           </Button>
         </div>
+
+        {isSyncing && progress && (
+          <div className="flex flex-col gap-2">
+            <Progress value={progress.percentage} className="h-2" />
+            <p className="text-xs text-muted-foreground text-right">
+              {progress.detail ?? `${progress.percentage}%`}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
