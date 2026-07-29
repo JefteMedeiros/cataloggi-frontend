@@ -2,7 +2,8 @@ node_modules
 .turbo
 dist
 dist-ssr
-*.local
+**/*.local
 *.log
 .DS_Store
 .git
+.env*
