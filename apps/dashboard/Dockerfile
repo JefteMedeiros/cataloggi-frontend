@@ -1,11 +1,10 @@
 FROM node:22-alpine AS builder
 
-ARG VITE_API_URL=https://cataloggi-backend-2.up.railway.app
+ARG VITE_API_URL
 ENV VITE_API_URL=${VITE_API_URL}
 
-RUN echo "Building dashboard with VITE_API_URL=${VITE_API_URL}"
-
-RUN corepack enable && corepack prepare pnpm@10.17.1 --activate
+RUN corepack enable \
+    && corepack prepare pnpm@10.17.1 --activate
 
 WORKDIR /app
 
@@ -18,7 +17,10 @@ RUN pnpm install --frozen-lockfile
 
 COPY . .
 
-RUN pnpm --filter dashboard build
+RUN echo "Building dashboard with VITE_API_URL=${VITE_API_URL}" \
+    && pnpm --filter @workspace/dashboard build
+
+RUN grep -R "${VITE_API_URL}" /app/apps/dashboard/dist
 
 FROM node:22-alpine
 

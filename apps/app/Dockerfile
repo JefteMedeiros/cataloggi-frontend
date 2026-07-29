@@ -8,7 +8,7 @@ RUN corepack enable \
 
 WORKDIR /app
 
-COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/app/package.json ./apps/app/
 COPY apps/dashboard/package.json ./apps/dashboard/
 COPY packages/ui/package.json ./packages/ui/
@@ -18,7 +18,9 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 
 RUN echo "Building with VITE_API_URL=${VITE_API_URL}" \
-    && pnpm turbo run build --filter=app
+    && pnpm --filter @workspace/app build
+
+RUN grep -R "${VITE_API_URL}" /app/apps/app/dist
 
 FROM node:22-alpine
 
